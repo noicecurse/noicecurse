@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "noicecurse"
+  description: "lorem ipsum"  
+  annotations:
+    github.com/project-slug: NoiceCurse/noicecurse
+spec:
+  type: service
+  owner: "guests"
+  lifecycle: experimental

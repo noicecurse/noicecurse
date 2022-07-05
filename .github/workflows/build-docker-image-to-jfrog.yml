@@ -1,0 +1,50 @@
+name: Build Docker Image & Publish on jFrog
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME :  ${{ github.repository }}:${{github.run_number}} 
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 18
+      uses: actions/setup-java@v3
+      with:
+        java-version: '18'
+        distribution: 'adopt'
+
+    - name: Cache local Maven repository
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key:  ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }} 
+        restore-keys: |
+           ${{ runner.os }}-maven- 
+
+    - name: Echo cache hit
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: echo "Cache NOT Hit"
+
+    - name: Build with Maven
+      run: mvn --batch-mode --update-snapshots package        
+    
+    - name: docker Login to Jfrog
+      run:  echo ${{secrets.JFROG_API_KEY}}  | docker login -unishkarsh.raj@statusneo.com --password-stdin noicecurse.jfrog.io 
+
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag noicecurse.jfrog.io/default-docker-local/$IMAGE_NAME
+
+    - name: docker Push Image to Jfrog
+      run: docker push noicecurse.jfrog.io/default-docker-local/$IMAGE_NAME
+
+    - name: docker logout
+      run: docker logout
